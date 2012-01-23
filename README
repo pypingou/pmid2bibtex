@@ -6,3 +6,8 @@ http://www.bioinformatics.org/texmed/
 
 TexMed provides a web-based interface to retrieve bibtex entries from
 PubMed identifier. This project does the same but command line.
+
+
+Dependency:
+- python                -- http://python.org
+- python-requests       -- http://python-requests.org/
