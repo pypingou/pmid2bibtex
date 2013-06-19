@@ -11,3 +11,7 @@ PubMed identifier. This project does the same but command line.
 Dependency:
 - python                -- http://python.org
 - python-requests       -- http://python-requests.org/
+
+
+
+/!\ Apparently the webservice this tool is relying on does not work anymore.
