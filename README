@@ -11,5 +11,6 @@ PubMed identifier. This project does the same but command line.
 Dependency:
 - python                -- http://python.org
 - python-requests       -- http://python-requests.org/
+- python-lxml           -- http://lxml.de/
 
 
