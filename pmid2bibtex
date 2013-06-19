@@ -84,10 +84,10 @@ URL = {{{URL}}},
 eprint = {{{eprint}}},
 abstract = {{{abstract}}}
 }}""".format(key=self.get_key(), author=self.author, title=self.title,
-            volume=self.volume, number=self.number, pages=self.pages,
-            year=self.year, journal=self.journal, doi=self.doi,
-            URL=self.URL, eprint=self.eprint, abstract=self.abstract,
-            )
+             volume=self.volume, number=self.number, pages=self.pages,
+             year=self.year, journal=self.journal, doi=self.doi,
+             URL=self.URL, eprint=self.eprint, abstract=self.abstract,
+             )
         return output
 
 
@@ -105,7 +105,7 @@ def setup_parser():
     """ Set the main arguments. """
     parser = argparse.ArgumentParser(prog='pmid2bibtex')
     parser.add_argument('pmid', nargs='+',
-                    help = 'PubMed identifier(s)')
+                        help='PubMed identifier(s)')
     return parser
 
 
