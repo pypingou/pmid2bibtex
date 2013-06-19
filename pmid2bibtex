@@ -39,7 +39,66 @@ This script retrieve the bibtex entries for PubMed identifier given.
 
 import argparse
 import logging
+
 import requests
+from lxml import etree
+
+
+class Article(object):
+    author = ""
+    title = ""
+    volume = ""
+    number = ""
+    pages = ""
+    year = ""
+    month = ""
+    day = ""
+    doi = ""
+    abstract = ""
+    URL = ""
+    eprint = ""
+    journal = ""
+    pubmedid = ""
+    ISSN = ""
+
+    def format_author(self):
+        """ Return the author list in the expected format. """
+
+    def get_key(self):
+        """ Return the key for the article. """
+        output = "{0}{1}{2}{3}".format(self.author.split(',')[0],
+                                       self.day, self.month, self.year)
+        return output
+
+    def to_bibtex(self):
+        output = """@article{{{key},
+author = {{{author}}},
+title = {{{title}}},
+volume = {{{volume}}},
+number = {{{number}}},
+pages = {{{pages}}},
+year = {{{year}}},
+journal = {{{journal}}},
+doi = {{{doi}}},
+URL = {{{URL}}},
+eprint = {{{eprint}}},
+abstract = {{{abstract}}}
+}}""".format(key=self.get_key(), author=self.author, title=self.title,
+            volume=self.volume, number=self.number, pages=self.pages,
+            year=self.year, journal=self.journal, doi=self.doi,
+            URL=self.URL, eprint=self.eprint, abstract=self.abstract,
+            )
+        return output
+
+
+def get_pubmed_xml(pmids):
+    """ Retrieve the XML from pubmed efetch service for the given list
+    of pubmed identifier.
+    """
+    url = 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi' \
+        '?db=pubmed&retmode=xml&id=%s' % (','.join(pmids))
+    r = requests.get(url)
+    return etree.XML(r.content)
 
 
 def setup_parser():
@@ -49,25 +108,72 @@ def setup_parser():
                     help = 'PubMed identifier(s)')
     return parser
 
-def extract_references(content):
-    output = ""
-    flag = False
-    for line in content.split('\n'):
-        if '<pre>' in line.lower():
-            flag = True
-            continue
-        if '</pre>' in line.lower():
-            flag = False
+
+def extract_references(root):
+    """ Extract the references from the XML. """
+    articles = []
+    for reference in root.iter("PubmedArticle"):
+        article = Article()
+
+        for element in reference.iter("PubDate"):
+            for child in element.getchildren():
+                if child.tag == 'Year':
+                    article.year = child.text
+                if child.tag == 'Month':
+                    article.month = child.text
+                if child.tag == 'Day':
+                    article.day = child.text
+
+        author = ""
+        for element in reference.iter("Author"):
+            for child in element.getchildren():
+                if child.tag == 'LastName':
+                    if not author:
+                        author = child.text
+                    else:
+                        author += " and {0}".format(child.text)
+                if child.tag == 'ForeName':
+                        author += ", {0}".format(child.text)
+        article.author = author
+
+        for element in reference.iter("ArticleTitle"):
+            article.title = element.text
             break
-        if flag:
-            output = output + '\n' + line
-    return output
+
+        for element in reference.iter("JournalIssue"):
+            for child in element.getchildren():
+                if child.tag == 'Volume':
+                    article.volume = child.text
+                if child.tag == 'Issue':
+                    article.number = child.text
+
+        for element in reference.iter("Journal"):
+            for child in element.getchildren():
+                if child.tag == 'ISOAbbreviation':
+                    article.journal = child.text
+
+        for element in reference.iter("Pagination"):
+            for child in element.getchildren():
+                article.pages = child.text
+                break
+
+        for element in reference.iter("ArticleIdList"):
+            for child in element.getchildren():
+                if child.tag == 'ArticleId':
+                    if child.get('IdType') == 'doi':
+                        article.doi = child.text
+                    if child.get('IdType') == 'pubmed':
+                        article.pubmedid = child.text
+
+        articles.append(article)
+
+    return articles
+
 
 if __name__ == '__main__':
     parser = setup_parser()
     args = parser.parse_args()
-    pmids = ','.join(args.pmid)
-    r = requests.get(
-        'http://www.bioinformatics.org/texmed/cgi-bin/list.cgi?PMID=%s' % pmids)
-    print extract_references(r.content)
-    
+    xml = get_pubmed_xml(args.pmid)
+    articles = extract_references(xml)
+    for article in articles:
+        print article.to_bibtex()
