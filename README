@@ -13,5 +13,3 @@ Dependency:
 - python-requests       -- http://python-requests.org/
 
 
-
-/!\ Apparently the webservice this tool is relying on does not work anymore.
